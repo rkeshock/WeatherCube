@@ -30,6 +30,7 @@ void setup() {
   Serial.println("WiFi connected");  
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
+  yield();
 }
 
 float tempRequest(float temp){
@@ -41,6 +42,7 @@ float tempRequest(float temp){
   const int httpPort = 80;
   if (!client.connect(host, httpPort)) {
     Serial.println("connection failed");
+    yield();
     return temp;
   }
   
@@ -54,6 +56,7 @@ float tempRequest(float temp){
                "Host: " + host + "\r\n" + 
                "Connection: close\r\n\r\n");
   delay(500);
+  yield();
 
   StaticJsonBuffer<800> jsonBuffer;
   String jsonString;
@@ -66,6 +69,7 @@ float tempRequest(float temp){
     if(n==15){
       jsonString = line;
     }
+    yield();
   }
   
   Serial.println(jsonString);
@@ -76,11 +80,13 @@ float tempRequest(float temp){
   JsonObject& root = jsonBuffer.parseObject(json);
   if (!root.success()) {
     Serial.println("parseObject() failed");
+    yield();
     return temp;} //returning from here
 
   temp = root["main"]["temp"];
   //Serial.println(temp);
   Serial.println();
+  yield();
   return temp;
 }
 
@@ -91,4 +97,5 @@ void loop() {
   Serial.println();
   Serial.println();
   delay(20000);
+  yield();
 }
