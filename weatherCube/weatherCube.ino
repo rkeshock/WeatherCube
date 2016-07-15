@@ -1,5 +1,8 @@
 #include <ESP8266WiFi.h>
 #include <ArduinoJson.h>
+#include <Adafruit_NeoPixel.h>
+ 
+Adafruit_NeoPixel strip = Adafruit_NeoPixel(16, 1, NEO_GRB + NEO_KHZ800);
 
 void wifiConnect(){ //connect to wifi
   const char* ssid     = "ssid";
@@ -58,14 +61,31 @@ float parseJson(String jsonString){
   return temp;
 }
 
+static void glow(uint32_t c) {
+  for(uint16_t i=0; i<strip.numPixels(); i++) {
+      strip.setPixelColor(i  , c); // Draw new pixel
+  }
+}
+
 void setup() {
-  Serial.begin(115200);
-  delay(100);
+  strip.begin();
+  strip.show();
   wifiConnect();
 }
  
 void loop() {
-  Serial.println(parseJson(httpGet()));
+  uint32_t color;
+  static unsigned long timer = millis();
+  if (millis() >= timer) {
+    if (millis()-timer >= 60000) { // Reset to 0 after counting for one minute
+      yield();
+    }
+    float temp = parseJson(httpGet());
+    if(temp > 80.0){
+      glow(strip.Color(255, 0, 0)); // Red
+      strip.show();
+    }
+  }
+
   yield();
-  delay(20000);
 }
