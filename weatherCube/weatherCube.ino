@@ -1,4 +1,5 @@
 #include <ESP8266WiFi.h>
+#include <ArduinoJson.h>
 
 void wifiConnect(){ //connect to wifi
   const char* ssid     = "ssid";
@@ -41,6 +42,22 @@ String httpGet(){ //retrieve json file as string
   return "";
 }
 
+float parseJson(String jsonString){
+  char json[jsonString.length() + 1];
+  jsonString.toCharArray(json, jsonString.length() + 1);
+  yield();
+  float temp = 0;
+  StaticJsonBuffer<800> jsonBuffer;
+  JsonObject& root = jsonBuffer.parseObject(json);
+  
+  if (!root.success()) {
+    return 9999;} //returning from here
+
+  temp = root["main"]["temp"];
+  yield();
+  return temp;
+}
+
 void setup() {
   Serial.begin(115200);
   delay(100);
@@ -48,6 +65,7 @@ void setup() {
 }
  
 void loop() {
-  Serial.println(httpGet());
+  Serial.println(parseJson(httpGet()));
   yield();
+  delay(20000);
 }
