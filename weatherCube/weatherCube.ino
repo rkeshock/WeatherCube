@@ -6,6 +6,7 @@
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(16, 1, NEO_GRB + NEO_KHZ800);
 SevSeg sevseg;
 
+static unsigned long timer = millis();
 
 void wifiConnect(){ //connect to wifi
   const char* ssid     = "ssid";
@@ -70,6 +71,7 @@ void setSevSeg(){
   byte segmentPins[] = {10, 0, 12, 15, 3, 16, 14, 13};
   sevseg.begin(COMMON_CATHODE, numDigits, digitPins, segmentPins);
   sevseg.setNumber(0, 1);
+  sevseg.refreshDisplay();
   yield();
   return;
 }
@@ -78,6 +80,7 @@ static void glow(uint32_t c) {
   for(uint16_t i=0; i<strip.numPixels(); i++) {
       strip.setPixelColor(i  , c); // Draw new pixel
   }
+  return;
 }
 
 void setColor(float temp){
@@ -126,13 +129,13 @@ void setup() {
   float temp = parseJson(httpGet());
   delay(500);
   setColor(temp);
+  strip.setBrightness(64);
   sevseg.setNumber(temp, 1);
   strip.show();
   yield();
 }
  
 void loop() {
-  static unsigned long timer = millis();
   if (millis() >= timer + 600000) {
     float temp = parseJson(httpGet());
     if(temp != 9999){ //error handling
@@ -140,7 +143,7 @@ void loop() {
       sevseg.setNumber(temp, 1);
       strip.show();
     }
+    timer = millis();
   }
   sevseg.refreshDisplay();
-  yield();
 }
