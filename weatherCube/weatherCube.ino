@@ -1,8 +1,11 @@
 #include <ESP8266WiFi.h>
 #include <ArduinoJson.h>
 #include <Adafruit_NeoPixel.h>
+#include <SevSeg.h>
  
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(16, 1, NEO_GRB + NEO_KHZ800);
+SevSeg sevseg;
+
 
 void wifiConnect(){ //connect to wifi
   const char* ssid     = "ssid";
@@ -54,11 +57,21 @@ float parseJson(String jsonString){
   JsonObject& root = jsonBuffer.parseObject(json);
   yield();  
   if (!root.success()) {
-    return 9999;} //returning from here
-
+    return 9999; //return error
+  }
   temp = root["main"]["temp"];
   yield();
   return temp;
+}
+
+void setSevSeg(){
+  byte numDigits = 4;
+  byte digitPins[] = {9, 5, 4, 2};
+  byte segmentPins[] = {10, 0, 12, 15, 3, 16, 14, 13};
+  sevseg.begin(COMMON_CATHODE, numDigits, digitPins, segmentPins);
+  sevseg.setNumber(0, 1);
+  yield();
+  return;
 }
 
 static void glow(uint32_t c) {
@@ -68,7 +81,7 @@ static void glow(uint32_t c) {
 }
 
 void setColor(float temp){
-      if(temp > 90.0){
+    if(temp > 90.0){
       glow(strip.Color(255, 0, 0)); // Red
     }
     if(temp > 80 && temp <= 90){
@@ -78,25 +91,25 @@ void setColor(float temp){
       glow(strip.Color(255, 165, 0));
     }
     if(temp > 60 &&  temp <= 70){
-      glow(strip.Color(255, 210, 127));
+      glow(strip.Color(255, 210, 0));
     }
     if(temp > 50 &&  temp <= 60){
-      glow(strip.Color(255, 255, 255));
+      glow(strip.Color(255, 255, 0));
     }
     if(temp > 40 &&  temp <= 50){
-      glow(strip.Color(127, 127, 255));
+      glow(strip.Color(255, 255, 127));
     }
     if(temp > 30 &&  temp <= 40){
-      glow(strip.Color(0, 0, 255));
+      glow(strip.Color(200, 200, 255));
     }
     if(temp > 20 &&  temp <= 30){
-      glow(strip.Color(0, 85, 255));
+      glow(strip.Color(163, 195, 255));
     }
     if(temp > 10 &&  temp <= 20){
-      glow(strip.Color(0, 170, 255));
+      glow(strip.Color(127, 191, 255));
     }
     if(temp <= 10){
-      glow(strip.Color(0, 255, 255));
+      glow(strip.Color(179, 127, 255));
     }
     yield();
     return;
@@ -106,23 +119,28 @@ void setup() {
   //general setup
   wifiConnect();
   strip.begin();
+  setSevSeg();
   delay(500);
 
   //initial color setting
   float temp = parseJson(httpGet());
   delay(500);
   setColor(temp);
+  sevseg.setNumber(temp, 1);
   strip.show();
   yield();
 }
  
 void loop() {
-  uint32_t color;
   static unsigned long timer = millis();
   if (millis() >= timer + 600000) {
     float temp = parseJson(httpGet());
-    setColor(temp);
-    strip.show();
+    if(temp != 9999){ //error handling
+      setColor(temp);
+      sevseg.setNumber(temp, 1);
+      strip.show();
+    }
   }
+  sevseg.refreshDisplay();
   yield();
 }
