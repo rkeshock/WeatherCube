@@ -52,7 +52,7 @@ float parseJson(String jsonString){
   float temp = 0;
   StaticJsonBuffer<800> jsonBuffer;
   JsonObject& root = jsonBuffer.parseObject(json);
-  
+  yield();  
   if (!root.success()) {
     return 9999;} //returning from here
 
@@ -67,25 +67,62 @@ static void glow(uint32_t c) {
   }
 }
 
+void setColor(float temp){
+      if(temp > 90.0){
+      glow(strip.Color(255, 0, 0)); // Red
+    }
+    if(temp > 80 && temp <= 90){
+      glow(strip.Color(255, 82, 0));
+    }
+    if(temp > 70 &&  temp <= 80){
+      glow(strip.Color(255, 165, 0));
+    }
+    if(temp > 60 &&  temp <= 70){
+      glow(strip.Color(255, 210, 127));
+    }
+    if(temp > 50 &&  temp <= 60){
+      glow(strip.Color(255, 255, 255));
+    }
+    if(temp > 40 &&  temp <= 50){
+      glow(strip.Color(127, 127, 255));
+    }
+    if(temp > 30 &&  temp <= 40){
+      glow(strip.Color(0, 0, 255));
+    }
+    if(temp > 20 &&  temp <= 30){
+      glow(strip.Color(0, 85, 255));
+    }
+    if(temp > 10 &&  temp <= 20){
+      glow(strip.Color(0, 170, 255));
+    }
+    if(temp <= 10){
+      glow(strip.Color(0, 255, 255));
+    }
+    yield();
+    return;
+}
+
 void setup() {
-  strip.begin();
-  strip.show();
+  //general setup
   wifiConnect();
+  strip.begin();
+  delay(500);
+
+  //initial color setting
+  float temp = parseJson(httpGet());
+  delay(500);
+  setColor(temp);
+  strip.show();
+  yield();
 }
  
 void loop() {
   uint32_t color;
   static unsigned long timer = millis();
-  if (millis() >= timer) {
-    if (millis()-timer >= 60000) { // Reset to 0 after counting for one minute
-      yield();
-    }
+  if (millis() >= timer + 600000) {
     float temp = parseJson(httpGet());
-    if(temp > 80.0){
-      glow(strip.Color(255, 0, 0)); // Red
-      strip.show();
-    }
+    setColor(temp);
+    strip.show();
   }
-
   yield();
 }
